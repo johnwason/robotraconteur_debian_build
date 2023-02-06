@@ -7,7 +7,7 @@ on:
 jobs:
 
   build-source-debs:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -37,17 +37,26 @@ jobs:
           - os: debian
             arch: amd64
             dist: buster
-          # - os: debian
-          #   arch: armhf
-          #   dist: buster
-          # - os: debian
-          #   arch: arm64
-          #   dist: buster
-          # - os: raspbian
-          #   arch: armhf
-          #   dist: buster
+          - os: debian
+            arch: armhf
+            dist: buster
+          - os: debian
+            arch: arm64
+            dist: buster
+          - os: raspbian
+            arch: armhf
+            dist: buster
           - os: debian
             arch: amd64
+            dist: bullseye
+          - os: debian
+            arch: armhf
+            dist: bullseye
+          - os: debian
+            arch: arm64
+            dist: bullseye
+          - os: raspbian
+            arch: armhf
             dist: bullseye
     steps:
     - uses: actions/checkout@v2
