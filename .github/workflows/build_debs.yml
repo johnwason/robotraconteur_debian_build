@@ -28,7 +28,8 @@ jobs:
         path: out/*
 
   build-debian-buster:    
-    runs-on: ubuntu-20.04
+    container: ${{ matrix.config.container }}
+    runs-on: ubuntu-latest
     needs: build-source-debs
     timeout-minutes: 720
     strategy:
@@ -37,27 +38,33 @@ jobs:
           - os: debian
             arch: amd64
             dist: buster
+            container: debian:buster-slim
           - os: debian
             arch: armhf
             dist: buster
+            container: debian:buster-slim
           - os: debian
             arch: arm64
             dist: buster
-          - os: raspbian
-            arch: armhf
-            dist: buster
+            container: debian:buster-slim
+          # - os: raspbian
+          #   arch: armhf
+          #   dist: buster
           - os: debian
             arch: amd64
             dist: bullseye
+            container: debian:bullseye-slim
           - os: debian
             arch: armhf
             dist: bullseye
+            container: debian:bullseye-slim
           - os: debian
             arch: arm64
             dist: bullseye
-          - os: raspbian
-            arch: armhf
-            dist: bullseye
+            container: debian:bullseye-slim
+          # - os: raspbian
+          #   arch: armhf
+          #   dist: bullseye
     steps:
     - uses: actions/checkout@v2
       with:
@@ -79,27 +86,43 @@ jobs:
       run: |
         wget http://archive.raspbian.org/raspbian/pool/main/r/raspbian-archive-keyring/raspbian-archive-keyring_20120528.2_all.deb
         sudo dpkg -i raspbian-archive-keyring_20120528.2_all.deb
-    - name: cp pbuilderrc
-      run: |
-        cp robotraconteur_debian_build/pbuilderrc $HOME/.pbuilderrc
-        sudo cp robotraconteur_debian_build/pbuilderrc /root/.pbuilderrc
-    - name: pbuilder-create
-      run: |
-        sudo mkdir -p /var/cache/pbuilder/${{ matrix.config.os }}-${{ matrix.config.dist }}-${{ matrix.config.arch }}/aptcache/
-        sudo OS=${{ matrix.config.os }} DIST=${{ matrix.config.dist }} ARCH=${{ matrix.config.arch }} pbuilder --create
     - name: extact-source-deb
       run: |
         dpkg-source -x source-debs/source-debs/${{ matrix.config.dist }}/robotraconteur_*~${{ matrix.config.dist }}.dsc src_deb
-    - name: pbuilder-build
+    - name: apt build-dep
+      if: ${{ matrix.config.arch == 'amd64' }}
+      working-directory: src_deb
+      run: |
+        sudo apt-get build-dep -y .
+    - name: apt build-dep
+      if: ${{ matrix.config.arch == 'amd64' }}
       working-directory: src_deb
       timeout-minutes: 720
       run: |
-        OS=${{ matrix.config.os }} DIST=${{ matrix.config.dist }} ARCH=${{ matrix.config.arch }} pdebuild
+        dpkg-buildpackage -us -ui -uc -b
+    - name: apt setup cross
+      if: ${{ matrix.config.arch != 'amd64' }}
+      working-directory: src_deb
+      run: |
+        sudo dpkg --add-architecture ${{ matrix.config.arch }}
+        sudo apt-get update
+        sudo apt-get install build-essential crossbuild-essential-${{ matrix.config.arch }} -y
+    - name: apt build-dep cross
+      if: ${{ matrix.config.arch != 'amd64' }}
+      working-directory: src_deb
+      run: |
+        sudo apt-get build-dep -y -${{ matrix.config.arch }} .
+    - name: apt build-dep cross
+      if: ${{ matrix.config.arch != 'amd64' }}
+      working-directory: src_deb
+      timeout-minutes: 720
+      run: |
+        CONFIG_SITE=/etc/dpkg-cross/cross-config.amd64  DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -ui -uc -b -${{ matrix.config.arch }} -Pcross,nocheck
     - name: archive result
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: 'result-${{ matrix.config.os }}-${{ matrix.config.dist }}-${{ matrix.config.arch }}'
-        path: result/*
+        path: *.deb
   build-release:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-20.04
