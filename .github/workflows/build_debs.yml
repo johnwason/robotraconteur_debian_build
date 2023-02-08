@@ -74,13 +74,13 @@ jobs:
       with:
         path: source-debs
     - name: apt update
-      run: sudo apt update
+      run: apt update
     - name: apt
       run: >
-        sudo apt-get install qemu 
+        apt-get install qemu 
         binfmt-support qemu-user-static 
         pbuilder debootstrap devscripts git-buildpackage 
-        debian-keyring  debian-archive-keyring dh-make -qq
+        debian-keyring  debian-archive-keyring dh-make sudo -qq
     - name: raspbian keyring
       if: ${{ matrix.config.os == 'raspbian' }}
       run: |
