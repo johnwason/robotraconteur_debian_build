@@ -122,7 +122,8 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: 'result-${{ matrix.config.os }}-${{ matrix.config.dist }}-${{ matrix.config.arch }}'
-        path: *.deb
+        path: |
+          *.deb
   build-release:
     if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-20.04
