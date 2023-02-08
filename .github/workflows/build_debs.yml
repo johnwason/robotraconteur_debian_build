@@ -111,13 +111,13 @@ jobs:
       if: ${{ matrix.config.arch != 'amd64' }}
       working-directory: src_deb
       run: |
-        sudo apt-get build-dep -y -${{ matrix.config.arch }} .
+        sudo apt-get build-dep -y -a${{ matrix.config.arch }} .
     - name: apt build-dep cross
       if: ${{ matrix.config.arch != 'amd64' }}
       working-directory: src_deb
       timeout-minutes: 720
       run: |
-        CONFIG_SITE=/etc/dpkg-cross/cross-config.amd64  DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -ui -uc -b -${{ matrix.config.arch }} -Pcross,nocheck
+        CONFIG_SITE=/etc/dpkg-cross/cross-config.amd64  DEB_BUILD_OPTIONS=nocheck dpkg-buildpackage -us -ui -uc -b -a${{ matrix.config.arch }} -Pcross,nocheck
     - name: archive result
       uses: actions/upload-artifact@v3
       with:
